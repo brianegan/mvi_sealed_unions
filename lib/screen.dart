@@ -21,7 +21,8 @@ class Screen extends StatefulWidget {
     final _presenter = presenter ??
         new ScreenModel(
           _intent.firstPageIntent,
-          _intent.nextPageIntent,
+          _intent.refreshPageIntent,
+          _intent.nextPageIntent
         );
 
     return new Screen._(key, _presenter, _intent);
@@ -63,7 +64,7 @@ class _ScreenState extends State<Screen> {
   Widget _body(ScreenState state) {
     return new RefreshIndicator(
       child: _content(state),
-      onRefresh: _intent.nextPageIntent,
+      onRefresh: _intent.refreshPageIntent,
     );
   }
 
@@ -71,11 +72,14 @@ class _ScreenState extends State<Screen> {
     return new Center(
       child: state.join(
         (data) {
-          return new ListView.builder(
-            itemCount: data.length,
-            itemBuilder: (context, index) {
-              return new ListTile(title: new Text(data[index]));
-            },
+          return new GestureDetector(
+            onVerticalDragDown: _intent.nextPageIntent,
+            child: new ListView.builder(
+              itemCount: data.length,
+              itemBuilder: (context, index) {
+                return new ListTile(title: new Text(data[index]));
+              },
+            ),
           );
         },
         (loading) => new CircularProgressIndicator(),
