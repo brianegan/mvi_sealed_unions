@@ -73,6 +73,7 @@ class _ScreenState extends State<Screen> {
       child: state.join(
         (data) {
           return new CustomScrollView(
+            controller: _intent.nextPageIntent.scrollController,
             scrollDirection: Axis.vertical,
             slivers: <Widget>[
               new SliverAppBar(

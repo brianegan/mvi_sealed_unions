@@ -16,29 +16,34 @@ class ScreenIntent {
       : this.firstPageIntent = firstPageIntent ?? new VoidStreamCallback(),
         this.refreshPageIntent =
             refreshPageIntent ?? new RefreshStreamCallback(),
-        this.nextPageIntent = nextPageIntent ??
-            new EndOfScrollControllerIntent(new ScrollController());
+        this.nextPageIntent =
+            nextPageIntent ?? new EndOfScrollControllerIntent();
 }
 
 class EndOfScrollControllerIntent extends StreamView<Null> {
-  final ScrollController controller;
+  final ScrollController scrollController;
 
-  EndOfScrollControllerIntent._(this.controller, Stream<Null> stream)
+  EndOfScrollControllerIntent._(this.scrollController, Stream<Null> stream)
       : super(stream);
 
-  factory EndOfScrollControllerIntent(
-    ScrollController controller, {
+  factory EndOfScrollControllerIntent({
+    ScrollController scrollController,
     double offset: 500.0,
   }) {
+    final _scrollController = scrollController ?? new ScrollController();
     final streamController = new StreamController<Null>.broadcast(sync: true);
 
-    controller.addListener(() {
-      if (controller.position.maxScrollExtent - controller.offset < offset) {
+    _scrollController.addListener(() {
+      if (_scrollController.position.maxScrollExtent -
+              _scrollController.offset <
+          offset) {
         streamController.add(null);
       }
     });
 
     return new EndOfScrollControllerIntent._(
-        controller, streamController.stream);
+      _scrollController,
+      streamController.stream,
+    );
   }
 }
