@@ -1,9 +1,6 @@
-import 'package:mvi_sealed_unions/screen_collection.dart';
-
 import 'dart:async';
-
-import 'package:mvi_sealed_unions/screen_update.dart';
-
+import 'package:mvi_sealed_unions/screen_collection.dart';
+import 'package:mvi_sealed_unions/screen_state_update.dart';
 import 'package:mvi_sealed_unions/di.dart';
 
 class DribbbleInteractor {
@@ -11,11 +8,11 @@ class DribbbleInteractor {
   bool fetching = false;
 
   /// emits data as a stream
-  Stream<ScreenUpdate> fetchFirstPageData() async* {
+  Stream<ScreenStateUpdate> fetchFirstPageData() async* {
     if (fetching) return;
     fetching = true;
 
-    yield new ScreenUpdate.loading();
+    yield new ScreenStateUpdate.loading();
     try {
       final shots =
           await DependencyInjector.instance.client.fetchPopularShots();
@@ -23,17 +20,17 @@ class DribbbleInteractor {
       nextLink = collection.nextLink;
       if (collection.items.isNotEmpty) {
         /// emits a new [LoadingStatePartial] with updated state
-        yield new ScreenUpdate.firstPage(collection);
+        yield new ScreenStateUpdate.firstPage(collection);
       }
     } catch (e) {
-      yield new ScreenUpdate.error(e.toString());
+      yield new ScreenStateUpdate.error(e.toString());
     } finally {
       fetching = false;
     }
   }
 
   /// emits data as a stream
-  Stream<ScreenUpdate> refreshPageData(
+  Stream<ScreenStateUpdate> refreshPageData(
     Completer<Null> completer,
   ) async* {
     if (fetching) return;
@@ -45,10 +42,10 @@ class DribbbleInteractor {
       nextLink = collection.nextLink;
       if (collection.items.isNotEmpty) {
         /// emits a new [LoadingStatePartial] with updated state
-        yield new ScreenUpdate.firstPage(collection);
+        yield new ScreenStateUpdate.firstPage(collection);
       }
     } catch (e) {
-      yield new ScreenUpdate.error(e.toString());
+      yield new ScreenStateUpdate.error(e.toString());
     } finally {
       fetching = false;
       completer.complete();
@@ -56,7 +53,7 @@ class DribbbleInteractor {
   }
 
   /// emits data as a stream
-  Stream<ScreenUpdate> nextPageData() async* {
+  Stream<ScreenStateUpdate> nextPageData() async* {
     if (fetching) return;
     fetching = true;
 
@@ -68,10 +65,10 @@ class DribbbleInteractor {
       nextLink = collection.nextLink;
       if (collection.items.isNotEmpty) {
         /// emits a new [LoadingStatePartial] with updated state
-        yield new ScreenUpdate.nextPage(collection);
+        yield new ScreenStateUpdate.nextPage(collection);
       }
     } catch (e) {
-      yield new ScreenUpdate.error(e.toString());
+      yield new ScreenStateUpdate.error(e.toString());
     } finally {
       fetching = false;
     }

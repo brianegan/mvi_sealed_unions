@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:mvi_sealed_unions/dribbble_interactor.dart';
 import 'package:mvi_sealed_unions/screen_state.dart';
-import 'package:mvi_sealed_unions/screen_update.dart';
+import 'package:mvi_sealed_unions/screen_state_update.dart';
 import 'package:meta/meta.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -30,17 +30,17 @@ class ScreenModel extends StreamView<ScreenState> {
     Stream<Null> nextPageIntent,
     DribbbleInteractor interactor,
   ) {
-    return new Observable<ScreenUpdate>.merge([
+    final updates = new Observable<ScreenStateUpdate>.merge([
       new Observable<Null>(firstPageIntent)
           .flatMap((_) => interactor.fetchFirstPageData()),
       new Observable<Completer<Null>>(refreshPageIntent)
           .flatMap((completer) => interactor.refreshPageData(completer)),
       new Observable<Null>(nextPageIntent)
           .flatMap((_) => interactor.nextPageData())
-    ]).scan(
-      (ScreenState state, ScreenUpdate partial, int index) {
-        return partial.update(state);
-      },
+    ]);
+
+    return updates.scan(
+      (prev, update, _) => update.apply(prev),
       initialValue,
     );
   }
