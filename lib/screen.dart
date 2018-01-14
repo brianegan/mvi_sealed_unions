@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dribbble_client/dribbble_client.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:mvi_sealed_unions/screen_collection.dart';
 import 'package:mvi_sealed_unions/screen_intent.dart';
 import 'package:mvi_sealed_unions/screen_item.dart';
 import 'package:mvi_sealed_unions/screen_model.dart';
@@ -71,37 +72,55 @@ class _ScreenState extends State<Screen> {
   Widget _content(ScreenState state) {
     return new Center(
       child: state.join(
-        (data) {
-          return new CustomScrollView(
+        (collection) {
+          return new CollectionWidget(
+            collection: collection,
             controller: _intent.nextPageIntent.scrollController,
-            scrollDirection: Axis.vertical,
-            slivers: <Widget>[
-              new SliverAppBar(
-                title: new Text("Dribbble Mvi"),
-                elevation: 4.0,
-              ),
-              new SliverGrid.count(
-                childAspectRatio: 4 / 3,
-                crossAxisCount:
-                    MediaQuery.of(context).orientation == Orientation.portrait
-                        ? 1
-                        : 2,
-                children: data.items
-                    .map((ScreenItem item) => item.join(
-                          (shot) => new ShotItem(shot: shot.shot),
-                          (_) => new LoadingItem(),
-                        ))
-                    .toList(growable: false),
-              )
-            ],
           );
         },
         (loading) => new CircularProgressIndicator(),
         (error) => new Text(error.message),
-        (empty) {
-          return new Text("Empty Response");
-        },
+        (empty) => new Text("Empty Response"),
       ),
+    );
+  }
+}
+
+class CollectionWidget extends StatelessWidget {
+  final ScreenCollection collection;
+  final ScrollController controller;
+
+  CollectionWidget({
+    Key key,
+    @required this.collection,
+    @required this.controller,
+  })
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return new CustomScrollView(
+      controller: controller,
+      scrollDirection: Axis.vertical,
+      slivers: <Widget>[
+        new SliverAppBar(
+          title: new Text("Dribbble Mvi"),
+          elevation: 4.0,
+        ),
+        new SliverGrid.count(
+          childAspectRatio: 4 / 3,
+          crossAxisCount:
+              MediaQuery.of(context).orientation == Orientation.portrait
+                  ? 1
+                  : 2,
+          children: collection.items
+              .map((ScreenItem item) => item.join(
+                    (shot) => new ShotItem(shot: shot.shot),
+                    (_) => new LoadingItem(),
+                  ))
+              .toList(growable: false),
+        )
+      ],
     );
   }
 }

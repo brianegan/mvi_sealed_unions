@@ -1,46 +1,61 @@
 import 'package:mvi_sealed_unions/screen_collection.dart';
+import 'package:mvi_sealed_unions/screen_item.dart';
 import 'package:mvi_sealed_unions/screen_state.dart';
 
-import 'package:sealed_unions/factories/quartet_factory.dart';
-import 'package:sealed_unions/implementations/union_4_impl.dart';
-import 'package:sealed_unions/union_4.dart';
+import 'package:sealed_unions/sealed_unions.dart';
 
 /// [ScreenStateUpdate] implementation of `UnionN` which might be considered as
 /// an equivalent of a `Sealed Class` class.
 /// Consider [FirstPage], [NextPage], [UpdateLoading] and [UpdateError] as a
 /// subclasses of the [ScreenStatePartial#Union4] `SealedClass`
-class ScreenStateUpdate
-    extends Union4Impl<FirstPage, NextPage, UpdateLoading, UpdateError> {
-  static const Quartet<FirstPage, NextPage, UpdateLoading, UpdateError>
-      factory =
-      const Quartet<FirstPage, NextPage, UpdateLoading, UpdateError>();
+class ScreenStateUpdate extends Union2Impl<Page, Page> {
+  static const Doublet<Page, Page> factory = const Doublet<Page, Page>();
 
-  ScreenStateUpdate._(Union4<FirstPage, NextPage, UpdateLoading, UpdateError> union)
-      : super(union);
+  ScreenStateUpdate._(Union2<Page, Page> union) : super(union);
 
   /// returns a new [ScreenStateUpdate] with modified `UnionN.first()` state
-  factory ScreenStateUpdate.firstPage(ScreenCollection data) =>
-      new ScreenStateUpdate._(factory.first(new FirstPage(data)));
+  factory ScreenStateUpdate.firstPage(Page page) =>
+      new ScreenStateUpdate._(factory.first(page));
 
   /// returns a new [ScreenStateUpdate] with modified `UnionN.second()` state
-  factory ScreenStateUpdate.nextPage(ScreenCollection newData) =>
-      new ScreenStateUpdate._(factory.second(new NextPage(newData)));
-
-  /// returns a new [ScreenStateUpdate] with modified `UnionN.third()` state
-  factory ScreenStateUpdate.loading() =>
-      new ScreenStateUpdate._(factory.third(new UpdateLoading()));
-
-  /// returns a new [ScreenStateUpdate] with modified `UnionN.fourth()` state
-  factory ScreenStateUpdate.error(String message) =>
-      new ScreenStateUpdate._(factory.fourth(new UpdateError(message)));
+  factory ScreenStateUpdate.nextPage(Page page) =>
+      new ScreenStateUpdate._(factory.second(page));
 
   ScreenState apply(ScreenState prev) {
     return join(
-      (firstPage) => new ScreenState.from(firstPage.collection),
-      (nextPage) => new ScreenState.from(
-          ScreenState.toCollection(prev).append(nextPage.collection)),
-      (loading) => new ScreenState.loading(),
-      (error) => new ScreenState.error(error.message),
+      (firstPage) {
+        return firstPage.join(
+          (loading) => new ScreenState.loading(),
+          (collection) => new ScreenState.from(collection),
+          (error) => new ScreenState.error(error.message),
+        );
+      },
+      (nextPage) {
+        final _prevCollection = ScreenState.toCollection(prev);
+
+        return nextPage.join(
+          (loading) {
+            return new ScreenState.from(
+              new ScreenCollection(
+                new List.from(_prevCollection.items)
+                  ..add(new ScreenItem.loading()),
+                nextLink: _prevCollection.nextLink,
+              ),
+            );
+          },
+          (collection) {
+            return new ScreenState.from(
+              new ScreenCollection(
+                new List.from(_prevCollection.items)
+                  ..removeLast()
+                  ..addAll(collection.items),
+                nextLink: collection.nextLink,
+              ),
+            );
+          },
+          (error) => new ScreenState.error(error.message),
+        );
+      },
     );
   }
 
@@ -49,26 +64,34 @@ class ScreenStateUpdate
 
   static String toNextLink(ScreenStateUpdate update) {
     return update.join(
-      (firstPage) => firstPage.collection.nextLink,
-      (nextPage) => nextPage.collection.nextLink,
-      (_) => '',
-      (_) => '',
+      (firstPage) => Page.toNextLink(firstPage),
+      (nextPage) => Page.toNextLink(nextPage),
     );
   }
 }
 
-/// Data
-class FirstPage {
-  final ScreenCollection collection;
+class Page extends Union3Impl<UpdateLoading, ScreenCollection, UpdateError> {
+  static const Triplet<UpdateLoading, ScreenCollection, UpdateError> factory =
+      const Triplet<UpdateLoading, ScreenCollection, UpdateError>();
 
-  const FirstPage(this.collection);
-}
+  Page._(Union3<UpdateLoading, ScreenCollection, UpdateError> union)
+      : super(union);
 
-/// Data
-class NextPage {
-  final ScreenCollection collection;
+  factory Page.loading() => new Page._(factory.first(new UpdateLoading()));
 
-  const NextPage(this.collection);
+  factory Page.collection(ScreenCollection collection) =>
+      new Page._(factory.second(collection));
+
+  factory Page.error(String message) =>
+      new Page._(factory.third(new UpdateError(message)));
+
+  static String toNextLink(Page page) {
+    return page.join(
+      (loading) => '',
+      (collection) => collection.nextLink,
+      (error) => '',
+    );
+  }
 }
 
 /// Loading state, stores a [percent]
