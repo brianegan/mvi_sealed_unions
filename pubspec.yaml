@@ -2,9 +2,9 @@ name: mvi_sealed_unions
 description: A new Flutter project.
 
 dependencies:
+  dribbble_client: 0.1.0
   rxdart: 0.15.0
-  sealed_unions:
-    path: ../dart_sealed_unions
+  sealed_unions: 2.0.0
   flutter_stream_friends: 0.6.2
   flutter:
     sdk: flutter

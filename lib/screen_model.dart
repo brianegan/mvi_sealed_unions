@@ -1,8 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/widgets.dart';
-import 'package:mvi_sealed_unions/screen_updates.dart';
-import 'package:mvi_sealed_unions/screen_state_partial.dart';
+import 'package:mvi_sealed_unions/di.dart';
+import 'package:mvi_sealed_unions/screen_collection.dart';
+import 'package:mvi_sealed_unions/screen_state.dart';
+import 'package:mvi_sealed_unions/screen_update.dart';
 import 'package:meta/meta.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -13,29 +14,43 @@ class ScreenModel extends StreamView<ScreenState> {
   /// Observes a refresh event, triggering a fetch on async data
   ScreenModel(
     Stream<Null> firstPageIntent,
-    Stream<Completer<Null>> nextPageIntent,
-    Stream<DragDownDetails> refreshPageIntent,
+    Stream<Completer<Null>> refreshPageIntent,
+    Stream<Null> nextPageIntent,
   )
-      : super(buildStream(firstPageIntent, nextPageIntent, refreshPageIntent));
+      : super(buildStream(firstPageIntent, refreshPageIntent, nextPageIntent));
 
   static Stream<ScreenState> buildStream(
     Stream<Null> firstPageIntent,
     Stream<Completer<Null>> refreshPageIntent,
-    Stream<DragDownDetails> nextPageIntent,
+    Stream<Null> nextPageIntent,
   ) {
-    return new Observable.merge([
+    final nextPageController = new StreamController<ScreenUpdate>();
+    final pageLoads = new Observable<ScreenUpdate>.merge([
       new Observable<Null>(firstPageIntent).flatMap((_) {
         return fetchFirstPageData();
       }),
       new Observable<Completer<Null>>(refreshPageIntent).flatMap((completer) {
         return refreshPageData(completer);
       }),
-      new Observable<DragDownDetails>(nextPageIntent).flatMap((details) {
-        return nextPageData(details);
-      })
+      nextPageController.stream
+    ]).asBroadcastStream();
+
+    new Observable<Null>(nextPageIntent)
+        .withLatestFrom<ScreenUpdate, String>(pageLoads, (details, update) {
+          return ScreenUpdate.toNextLink(update);
+        })
+        .where((nextLink) => nextLink != null && nextLink.isNotEmpty)
+        .distinct()
+        .flatMap<ScreenUpdate>((nextLink) {
+          return nextPageData(nextLink);
+        })
+        .listen((nextPageData) => nextPageController.add(nextPageData));
+
+    return new Observable<ScreenUpdate>.merge([
+      pageLoads,
     ]).scan(
       (ScreenState state, ScreenUpdate partial, int index) {
-        return partial.reduce(state);
+        return partial.update(state);
       },
       initialValue,
     );
@@ -45,65 +60,52 @@ class ScreenModel extends StreamView<ScreenState> {
   static Stream<ScreenUpdate> fetchFirstPageData() async* {
     yield new ScreenUpdate.loading();
     try {
-      List<String> data = await fetchDataFromServer();
-      if (data.isNotEmpty) {
+      final shots =
+          await DependencyInjector.instance.client.fetchPopularShots();
+      ScreenCollection collection = new ScreenCollection.from(shots);
+      if (collection.items.isNotEmpty) {
         /// emits a new [LoadingStatePartial] with updated state
-        yield new ScreenUpdate.firstPage(data);
+        yield new ScreenUpdate.firstPage(collection);
+      } else {
+        print("Hello");
       }
-    } on Exception catch (e) {
+    } catch (e) {
       yield new ScreenUpdate.error(e.toString());
     }
   }
 
   /// emits data as a stream
-  static Stream<ScreenUpdate> nextPageData(DragDownDetails details) async* {
-    print(details);
+  static Stream<ScreenUpdate> nextPageData(String nextLink) async* {
     try {
-      List<String> data = await fetchDataFromServer();
-      if (data.isNotEmpty) {
+      final shots = await DependencyInjector.instance.client.fetchShots(
+        Uri.parse(nextLink),
+      );
+      ScreenCollection collection = new ScreenCollection.from(shots);
+      if (collection.items.isNotEmpty) {
         /// emits a new [LoadingStatePartial] with updated state
-        yield new ScreenUpdate.nextPage(data);
+        yield new ScreenUpdate.nextPage(collection);
       }
-    } on Exception catch (e) {
+    } catch (e) {
       yield new ScreenUpdate.error(e.toString());
     }
   }
 
   /// emits data as a stream
   static Stream<ScreenUpdate> refreshPageData(
-      Completer<Null> completer) async* {
+    Completer<Null> completer,
+  ) async* {
     try {
-      List<String> data = await fetchDataFromServer();
-      if (data.isNotEmpty) {
+      final shots =
+          await DependencyInjector.instance.client.fetchPopularShots();
+      ScreenCollection collection = new ScreenCollection.from(shots);
+      if (collection.items.isNotEmpty) {
         /// emits a new [LoadingStatePartial] with updated state
-        yield new ScreenUpdate.firstPage(data);
+        yield new ScreenUpdate.firstPage(collection);
       }
-    } on Exception catch (e) {
+    } catch (e) {
       yield new ScreenUpdate.error(e.toString());
     } finally {
       completer.complete();
     }
-  }
-
-  static Future<List<String>> fetchDataFromServer() async {
-    return new Future.delayed(
-      new Duration(seconds: 1),
-      () {
-        return [
-          'One',
-          'Two',
-          'Three',
-          'One',
-          'Two',
-          'Three',
-          'One',
-          'Two',
-          'Three',
-          'One',
-          'Two',
-          'Three',
-        ];
-      },
-    );
   }
 }

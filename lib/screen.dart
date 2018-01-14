@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:dribbble_client/dribbble_client.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mvi_sealed_unions/screen_intent.dart';
+import 'package:mvi_sealed_unions/screen_item.dart';
 import 'package:mvi_sealed_unions/screen_model.dart';
-import 'package:mvi_sealed_unions/screen_updates.dart';
+import 'package:mvi_sealed_unions/screen_state.dart';
 
 class Screen extends StatefulWidget {
   final ScreenIntent _intent;
@@ -22,7 +24,7 @@ class Screen extends StatefulWidget {
         new ScreenModel(
           _intent.firstPageIntent,
           _intent.refreshPageIntent,
-          _intent.nextPageIntent
+          _intent.nextPageIntent,
         );
 
     return new Screen._(key, _presenter, _intent);
@@ -50,12 +52,10 @@ class _ScreenState extends State<Screen> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-      appBar: new AppBar(title: new Text('Sealed Union Example')),
       body: new StreamBuilder(
         stream: _presenter,
-        initialData: new ScreenState.initial(),
         builder: (BuildContext context, AsyncSnapshot<ScreenState> snapshot) {
-          return _body(snapshot.data);
+          return snapshot.hasData ? _body(snapshot.data) : new Container();
         },
       ),
     );
@@ -72,19 +72,124 @@ class _ScreenState extends State<Screen> {
     return new Center(
       child: state.join(
         (data) {
-          return new GestureDetector(
-            onVerticalDragDown: _intent.nextPageIntent,
-            child: new ListView.builder(
-              itemCount: data.length,
-              itemBuilder: (context, index) {
-                return new ListTile(title: new Text(data[index]));
-              },
-            ),
+          return new CustomScrollView(
+            scrollDirection: Axis.vertical,
+            slivers: <Widget>[
+              new SliverAppBar(
+                title: new Text("Dribbble Mvi"),
+                elevation: 4.0,
+              ),
+              new SliverGrid.count(
+                childAspectRatio: 4 / 3,
+                crossAxisCount:
+                    MediaQuery.of(context).orientation == Orientation.portrait
+                        ? 1
+                        : 2,
+                children: data.items
+                    .map((ScreenItem item) => item.join(
+                          (shot) => new ShotItem(shot: shot.shot),
+                          (_) => new LoadingItem(),
+                        ))
+                    .toList(growable: false),
+              )
+            ],
           );
         },
         (loading) => new CircularProgressIndicator(),
         (error) => new Text(error.message),
-        (empty) => new Text("Empty Response"),
+        (empty) {
+          return new Text("Empty Response");
+        },
+      ),
+    );
+  }
+}
+
+class ShotItem extends StatelessWidget {
+  final DribbbleShot shot;
+
+  ShotItem({Key key, @required this.shot}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return new Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        new Hero(
+          tag: shot,
+          child: new AspectRatio(
+            aspectRatio: 4 / 3,
+            child: new GestureDetector(
+              child: new Image.network(
+                shot.images.teaser,
+                fit: BoxFit.cover,
+              ),
+              onTap: () {
+                fullScreen(context);
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void fullScreen(BuildContext context) {
+    Navigator.of(context).push(new PageRouteBuilder<Null>(
+      pageBuilder: (
+        BuildContext context,
+        Animation<double> animation,
+        Animation<double> secondaryAnimation,
+      ) {
+        return new Scaffold(
+          body: new GestureDetector(
+            onVerticalDragDown: (DragDownDetails _) {
+              Navigator.pop(context);
+            },
+            child: new Container(
+              color: Colors.black,
+              child: new Center(
+                child: new AspectRatio(
+                  aspectRatio: shot.width / shot.height,
+                  child: new Hero(
+                    tag: shot,
+                    child: new Stack(
+                      children: <Widget>[
+                        new Positioned.fill(
+                          child: new Image.network(
+                            shot.images.teaser,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        new Center(child: new CircularProgressIndicator()),
+                        new Positioned.fill(
+                          child: new Image.network(
+                            shot.images.hiDpi ??
+                                shot.images.normal ??
+                                shot.images.teaser,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    ));
+  }
+}
+
+class LoadingItem extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return new Center(
+      child: new Padding(
+        padding: new EdgeInsets.all(8.0),
+        child: new CircularProgressIndicator(),
       ),
     );
   }
