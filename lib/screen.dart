@@ -1,44 +1,47 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:dribbble_client/dribbble_client.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:mvi_sealed_unions/di.dart';
 import 'package:mvi_sealed_unions/screen_collection.dart';
 import 'package:mvi_sealed_unions/screen_intent.dart';
 import 'package:mvi_sealed_unions/screen_item.dart';
 import 'package:mvi_sealed_unions/screen_model.dart';
 import 'package:mvi_sealed_unions/screen_state.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:transparent_image/transparent_image.dart';
 
-class Screen extends StatefulWidget {
+class ShotsList extends StatefulWidget {
   final ScreenIntent _intent;
-  final ScreenModel _presenter;
+  final Stream<ScreenState> _presenter;
 
-  Screen._(Key key, this._presenter, this._intent) : super(key: key);
+  ShotsList._(Key key, this._presenter, this._intent) : super(key: key);
 
-  factory Screen({
+  factory ShotsList({
     Key key,
     ScreenIntent intent,
-    ScreenModel presenter,
+    Stream<ScreenState> presenter,
   }) {
     final _intent = intent ?? new ScreenIntent();
     final _presenter = presenter ??
-        new ScreenModel(
+        model(
           _intent.firstPageIntent,
           _intent.refreshPageIntent,
           _intent.nextPageIntent,
+          DependencyInjector.instance.interactor,
         );
 
-    return new Screen._(key, _presenter, _intent);
+    return new ShotsList._(key, _presenter, _intent);
   }
 
   @override
   _ScreenState createState() => new _ScreenState();
 }
 
-class _ScreenState extends State<Screen> {
+class _ScreenState extends State<ShotsList> {
   ScreenIntent _intent;
-  ScreenModel _presenter;
+  Stream<ScreenState> _presenter;
 
   @override
   void initState() {
@@ -100,61 +103,118 @@ class CollectionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final crossAxisCount =
+        MediaQuery.of(context).orientation == Orientation.portrait ? 2 : 3;
+
     return new CustomScrollView(
       controller: controller,
       scrollDirection: Axis.vertical,
       slivers: <Widget>[
         new SliverAppBar(
-          title: new Text("Dribbble Mvi"),
+          title: new Text("Dribbble Demo"),
           elevation: 4.0,
         ),
-        new SliverGrid.count(
-          childAspectRatio: 4 / 3,
-          crossAxisCount:
-              MediaQuery.of(context).orientation == Orientation.portrait
-                  ? 1
-                  : 2,
+        new SliverStaggeredGrid.count(
+          crossAxisCount: crossAxisCount,
           children: collection.items
               .map((ScreenItem item) => item.join(
-                    (shot) => new ShotItem(shot: shot.shot),
+                    (shot) => new ShotItem(
+                          shot: shot.shot,
+                          backgroundColor: shot.backgroundColor,
+                          controller: controller,
+                        ),
                     (_) => new LoadingItem(),
                   ))
               .toList(growable: false),
-        )
+          staggeredTiles: _getTiles(context, collection.items, crossAxisCount),
+        ),
       ],
     );
+  }
+
+  List<StaggeredTile> _getTiles(
+    BuildContext context,
+    List<ScreenItem> items,
+    int crossAxisCount,
+  ) {
+    final List<StaggeredTile> tiles = new List(items.length);
+    final orientation = MediaQuery.of(context).orientation;
+
+    for (var i = 0; i < items.length; i++) {
+      final ratio = (3 / 4);
+
+      if (orientation == Orientation.portrait) {
+        tiles[i] = items[i].join(
+          (shot) => i % 5 == 0
+              ? new StaggeredTile.extent(
+                  2, (MediaQuery.of(context).size.width) * ratio)
+              : new StaggeredTile.extent(
+                  1, (MediaQuery.of(context).size.width / 2) * ratio),
+          (_) => new StaggeredTile.extent(2, 100.0),
+        );
+      } else if (orientation == Orientation.landscape) {
+        tiles[i] = items[i].join(
+          (shot) {
+            return i % 7 == 0
+                ? new StaggeredTile.extent(
+                    2, (MediaQuery.of(context).size.width / 3 * 2) * ratio)
+                : new StaggeredTile.extent(
+                    1, (MediaQuery.of(context).size.width / 3) * ratio);
+          },
+          (_) => new StaggeredTile.extent(3, 200.0),
+        );
+      }
+    }
+
+    return tiles;
   }
 }
 
 class ShotItem extends StatelessWidget {
   final DribbbleShot shot;
+  final Color backgroundColor;
+  final ScrollController controller;
 
-  ShotItem({Key key, @required this.shot}) : super(key: key);
+  ShotItem({
+    Key key,
+    @required this.shot,
+    @required this.backgroundColor,
+    @required this.controller,
+  })
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return new Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        new Hero(
-          tag: shot,
-          child: new AspectRatio(
-            aspectRatio: 4 / 3,
-            child: new GestureDetector(
-              child: new FadeInImage.memoryNetwork(
-                fadeInDuration: new Duration(milliseconds: 200),
-                placeholder: kTransparentImage,
-                image: shot.images.teaser,
-                fit: BoxFit.cover,
+    return new Container(
+      color: backgroundColor,
+      child: new Stack(
+        children: <Widget>[
+          new Hero(
+            tag: shot,
+            child: new AspectRatio(
+              aspectRatio: 4 / 3,
+              child: new GestureDetector(
+                child: new FadeInImage.memoryNetwork(
+                  fadeInDuration: new Duration(milliseconds: 200),
+                  placeholder: kTransparentImage,
+                  image: shot.images.teaser,
+                  fit: BoxFit.cover,
+                ),
+                onTap: () {
+                  fullScreen(context);
+                },
               ),
-              onTap: () {
-                fullScreen(context);
-              },
             ),
           ),
-        ),
-      ],
+          new Positioned(
+            right: 12.0,
+            bottom: 12.0,
+            child: new AnimatedPreview(
+              animated: shot.animated,
+            ),
+          )
+        ],
+      ),
     );
   }
 
@@ -206,6 +266,26 @@ class ShotItem extends StatelessWidget {
   }
 }
 
+class AnimatedPreview extends StatelessWidget {
+  final bool animated;
+
+  AnimatedPreview({Key key, this.animated}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return animated
+        ? new Container(
+            decoration: new BoxDecoration(
+              color: new Color.fromRGBO(0, 0, 0, 0.4),
+              borderRadius: new BorderRadius.all(new Radius.circular(3.0)),
+            ),
+            padding: new EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+            child: new Text("GIF"),
+          )
+        : new Container();
+  }
+}
+
 class LoadingItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -217,70 +297,3 @@ class LoadingItem extends StatelessWidget {
     );
   }
 }
-
-final Uint8List kTransparentImage = new Uint8List.fromList(<int>[
-  0x89,
-  0x50,
-  0x4E,
-  0x47,
-  0x0D,
-  0x0A,
-  0x1A,
-  0x0A,
-  0x00,
-  0x00,
-  0x00,
-  0x0D,
-  0x49,
-  0x48,
-  0x44,
-  0x52,
-  0x00,
-  0x00,
-  0x00,
-  0x01,
-  0x00,
-  0x00,
-  0x00,
-  0x01,
-  0x08,
-  0x06,
-  0x00,
-  0x00,
-  0x00,
-  0x1F,
-  0x15,
-  0xC4,
-  0x89,
-  0x00,
-  0x00,
-  0x00,
-  0x0A,
-  0x49,
-  0x44,
-  0x41,
-  0x54,
-  0x78,
-  0x9C,
-  0x63,
-  0x00,
-  0x01,
-  0x00,
-  0x00,
-  0x05,
-  0x00,
-  0x01,
-  0x0D,
-  0x0A,
-  0x2D,
-  0xB4,
-  0x00,
-  0x00,
-  0x00,
-  0x00,
-  0x49,
-  0x45,
-  0x4E,
-  0x44,
-  0xAE,
-]);

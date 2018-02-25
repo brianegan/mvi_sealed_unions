@@ -9,11 +9,11 @@ class MviApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return new MaterialApp(
       title: 'Sealed Union Example',
-      theme: new ThemeData.light().copyWith(
-        primaryColor: Colors.pink[100],
+      theme: new ThemeData.dark().copyWith(
+        primaryColor: Colors.grey[800],
         accentColor: Colors.pink[200],
       ),
-      home: new Screen(),
+      home: new ShotsList(),
     );
   }
 }

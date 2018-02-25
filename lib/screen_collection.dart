@@ -23,7 +23,7 @@ class ScreenCollection {
   ScreenCollection append(ScreenCollection updates) {
     return new ScreenCollection(
       <ScreenItem>[]..addAll(items)..addAll(updates.items),
-      nextLink: updates.nextLink
+      nextLink: updates.nextLink ?? nextLink
     );
   }
 
