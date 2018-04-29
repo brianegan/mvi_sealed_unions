@@ -1,6 +1,6 @@
 import 'package:giphy_client/giphy_client.dart';
-import 'package:mvi_sealed_unions/common/screen_item.dart';
-import 'package:mvi_sealed_unions/search/search_model.dart';
+import 'package:sealed_union_demo/common/screen_item.dart';
+import 'package:sealed_union_demo/search/search_model.dart';
 import 'package:sealed_unions/sealed_unions.dart';
 
 class SearchUpdate extends Union3Impl<SearchPage, SearchPage, NoSearchTerm> {

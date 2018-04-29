@@ -1,5 +1,5 @@
-import 'package:mvi_sealed_unions/common/screen_item.dart';
-import 'package:mvi_sealed_unions/trending/trending_screen_model.dart';
+import 'package:sealed_union_demo/common/screen_item.dart';
+import 'package:sealed_union_demo/trending/trending_screen_model.dart';
 import 'package:sealed_unions/sealed_unions.dart';
 
 /// [TrendingScreenUpdate] implementation of `UnionN` which might be considered as

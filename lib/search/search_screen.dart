@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:mvi_sealed_unions/common/screen_item_list.dart';
-import 'package:mvi_sealed_unions/search/search_interactor.dart';
-import 'package:mvi_sealed_unions/search/search_model.dart';
-import 'package:mvi_sealed_unions/search/search_presenter.dart';
+import 'package:sealed_union_demo/common/screen_item_list.dart';
+import 'package:sealed_union_demo/search/search_interactor.dart';
+import 'package:sealed_union_demo/search/search_model.dart';
+import 'package:sealed_union_demo/search/search_presenter.dart';
 
 class SearchScreen extends StatefulWidget {
   final SearchPresenter Function() initPresenter;

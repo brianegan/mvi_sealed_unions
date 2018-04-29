@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:giphy_client/giphy_client.dart';
-import 'package:mvi_sealed_unions/di.dart';
-import 'package:mvi_sealed_unions/trending/trending_screen_model.dart';
-import 'package:mvi_sealed_unions/trending/trending_screen_update.dart';
+import 'package:sealed_union_demo/di.dart';
+import 'package:sealed_union_demo/trending/trending_screen_model.dart';
+import 'package:sealed_union_demo/trending/trending_screen_update.dart';
 
 class TrendingInteractor {
   final GiphyClient _client;
@@ -16,7 +16,8 @@ class TrendingInteractor {
     yield TrendingScreenUpdate.firstPage(Page.loading());
 
     try {
-      final collection = TrendingScreenCollection.from(await _client.trending());
+      final collection =
+          TrendingScreenCollection.from(await _client.trending());
       _offset = collection.offset + collection.count;
       yield TrendingScreenUpdate.firstPage(Page.collection(collection));
     } catch (e) {
@@ -24,9 +25,11 @@ class TrendingInteractor {
     }
   }
 
-  Stream<TrendingScreenUpdate> refreshPageData(Completer<Null> completer) async* {
+  Stream<TrendingScreenUpdate> refreshPageData(
+      Completer<Null> completer) async* {
     try {
-      final collection = TrendingScreenCollection.from(await _client.trending());
+      final collection =
+          TrendingScreenCollection.from(await _client.trending());
       _offset = collection.offset + collection.count;
       yield TrendingScreenUpdate.firstPage(Page.collection(collection));
     } catch (e) {

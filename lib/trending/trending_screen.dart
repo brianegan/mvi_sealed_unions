@@ -1,11 +1,11 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:mvi_sealed_unions/common/screen_item_list.dart';
-import 'package:mvi_sealed_unions/search/search_screen.dart';
-import 'package:mvi_sealed_unions/trending/trending_interactor.dart';
-import 'package:mvi_sealed_unions/trending/trending_presenter.dart';
-import 'package:mvi_sealed_unions/trending/trending_screen_model.dart';
+import 'package:sealed_union_demo/common/screen_item_list.dart';
+import 'package:sealed_union_demo/search/search_screen.dart';
+import 'package:sealed_union_demo/trending/trending_interactor.dart';
+import 'package:sealed_union_demo/trending/trending_presenter.dart';
+import 'package:sealed_union_demo/trending/trending_screen_model.dart';
 
 class TrendingScreen extends StatefulWidget {
   final TrendingPresenter Function() initPresenter;

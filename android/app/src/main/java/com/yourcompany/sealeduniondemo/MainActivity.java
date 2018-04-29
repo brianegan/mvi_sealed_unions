@@ -1,4 +1,4 @@
-package com.yourcompany.mvisealedunions;
+package com.yourcompany.sealeduniondemo;
 
 import android.os.Bundle;
 

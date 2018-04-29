@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mvi_sealed_unions/trending/trending_screen.dart';
+import 'package:sealed_union_demo/trending/trending_screen.dart';
 
 void main() {
   // ignore: deprecated_member_use

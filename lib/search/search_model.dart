@@ -1,5 +1,5 @@
 import 'package:giphy_client/giphy_client.dart';
-import 'package:mvi_sealed_unions/common/screen_item.dart';
+import 'package:sealed_union_demo/common/screen_item.dart';
 import 'package:sealed_unions/sealed_unions.dart';
 
 class SearchModel extends Union5Impl<SearchNoTerm, SearchLoading, SearchError,

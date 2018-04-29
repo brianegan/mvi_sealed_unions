@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:mvi_sealed_unions/common/presenter.dart';
-import 'package:mvi_sealed_unions/search/search_interactor.dart';
-import 'package:mvi_sealed_unions/search/search_model.dart';
-import 'package:mvi_sealed_unions/search/search_update.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:sealed_union_demo/common/presenter.dart';
+import 'package:sealed_union_demo/search/search_interactor.dart';
+import 'package:sealed_union_demo/search/search_model.dart';
+import 'package:sealed_union_demo/search/search_update.dart';
 
 class SearchPresenter extends Presenter<SearchModel> {
   static final _initialModel = SearchModel.noTerm();
@@ -28,7 +28,7 @@ class SearchPresenter extends Presenter<SearchModel> {
       updateQueryController.stream
           .debounce(Duration(milliseconds: 300))
           .distinct()
-          .flatMap(interactor.search),
+          .switchMap(interactor.search),
       refreshController.stream.flatMap((completer) =>
           interactor.refreshPageData(updateQueryController.value, completer)),
       nextPageController.stream.exhaustMap((_) {

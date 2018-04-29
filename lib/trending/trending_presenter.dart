@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:mvi_sealed_unions/common/presenter.dart';
-import 'package:mvi_sealed_unions/trending/trending_interactor.dart';
-import 'package:mvi_sealed_unions/trending/trending_screen_model.dart';
-import 'package:mvi_sealed_unions/trending/trending_screen_update.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:sealed_union_demo/common/presenter.dart';
+import 'package:sealed_union_demo/trending/trending_interactor.dart';
+import 'package:sealed_union_demo/trending/trending_screen_model.dart';
+import 'package:sealed_union_demo/trending/trending_screen_update.dart';
 
 class TrendingPresenter extends Presenter<TrendingModel> {
   static final _initialModel = TrendingModel.initial();

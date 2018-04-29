@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:mvi_sealed_unions/common/gif_item.dart';
-import 'package:mvi_sealed_unions/common/loading_item.dart';
-import 'package:mvi_sealed_unions/common/screen_item.dart';
+import 'package:sealed_union_demo/common/gif_item.dart';
+import 'package:sealed_union_demo/common/loading_item.dart';
+import 'package:sealed_union_demo/common/screen_item.dart';
 
 class ScreenItemList extends StatelessWidget {
   static const _ratio = 3 / 4;

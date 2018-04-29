@@ -1,4 +1,4 @@
-name: mvi_sealed_unions
+name: sealed_union_demo
 description: A new Flutter project.
 
 dependencies:
@@ -43,7 +43,7 @@ flutter:
   fonts:
     - family: Joystix
       fonts:
-        - asset: assets/fonts/joystix_monospace.ttf
+        - asset: fonts/joystix_monospace.ttf
   #       - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro

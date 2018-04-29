@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:giphy_client/giphy_client.dart';
-import 'package:mvi_sealed_unions/di.dart';
-import 'package:mvi_sealed_unions/search/search_update.dart';
+import 'package:sealed_union_demo/di.dart';
+import 'package:sealed_union_demo/search/search_update.dart';
 
 class SearchInteractor {
   final GiphyClient _client;
