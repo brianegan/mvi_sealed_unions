@@ -3,55 +3,62 @@ import 'dart:async';
 import 'package:rxdart/rxdart.dart';
 import 'package:sealed_union_demo/common/presenter.dart';
 import 'package:sealed_union_demo/trending/trending_interactor.dart';
-import 'package:sealed_union_demo/trending/trending_screen_model.dart';
-import 'package:sealed_union_demo/trending/trending_screen_update.dart';
+import 'package:sealed_union_demo/trending/trending_model.dart';
+import 'package:sealed_union_demo/trending/trending_update.dart';
 
+/// Provides a Stream<TrendingModel>, the latest value of the Stream, and
+/// methods to update the state of the screen to the TrendingScreen.
+///
+/// It works by listening to a series of Streams and transforming those
+/// Streams into a new State. It does this by converting inputs from the View
+/// layer into a series of TrendingUpdates. The updates are then applied
+/// to the previous state of the app using the scan operator from RxDart.
 class TrendingPresenter extends Presenter<TrendingModel> {
   static final _initialModel = TrendingModel.initial();
 
-  final PublishSubject<void> _firstPageController;
-  final PublishSubject<Completer<Null>> _refreshController;
-  final PublishSubject<void> _nextPageController;
+  final Sink<void> _firstPageSink;
+  final Sink<Completer<Null>> _refreshSink;
+  final Sink<void> _nextPageSink;
 
   factory TrendingPresenter(TrendingInteractor interactor) {
-    final firstPageController = PublishSubject<void>(sync: true);
-    final refreshController = PublishSubject<Completer<Null>>(sync: true);
-    final nextPageController = PublishSubject<void>(sync: true);
-    final updates = Observable<TrendingScreenUpdate>.merge([
-      firstPageController.stream.flatMap(interactor.fetchFirstPageData),
-      refreshController.stream.flatMap(interactor.refreshPageData),
-      nextPageController.stream.exhaustMap(interactor.nextPageData)
+    final firstPageSubject = PublishSubject<void>(sync: true);
+    final refreshSubject = PublishSubject<Completer<Null>>(sync: true);
+    final nextPageSubject = PublishSubject<void>(sync: true);
+    final updates = Observable<TrendingUpdate>.merge([
+      firstPageSubject.stream.flatMap(interactor.fetchFirstPage),
+      refreshSubject.stream.flatMap(interactor.refresh),
+      nextPageSubject.stream.exhaustMap(interactor.nextPage)
     ]);
 
     return TrendingPresenter._(
-      updates.scan((prev, update, _) => update.apply(prev), _initialModel),
-      firstPageController,
-      refreshController,
-      nextPageController,
+      updates.scan((prev, update, _) => update(prev), _initialModel),
+      firstPageSubject,
+      refreshSubject,
+      nextPageSubject,
     );
   }
 
   TrendingPresenter._(
     Stream<TrendingModel> _stream,
-    this._firstPageController,
-    this._refreshController,
-    this._nextPageController,
+    this._firstPageSink,
+    this._refreshSink,
+    this._nextPageSink,
   ) : super(stream: _stream, initialModel: _initialModel);
 
-  void loadFirstPage() => _firstPageController.add(null);
+  void loadFirstPage() => _firstPageSink.add(null);
 
   Future<Null> refresh() {
     final completer = Completer<Null>();
-    _refreshController.add(completer);
+    _refreshSink.add(completer);
     return completer.future;
   }
 
-  void loadNextPage() => _nextPageController.add(null);
+  void loadNextPage() => _nextPageSink.add(null);
 
   void close() {
-    _firstPageController.close();
-    _nextPageController.close();
-    _refreshController.close();
+    _firstPageSink.close();
+    _nextPageSink.close();
+    _refreshSink.close();
     super.close();
   }
 }

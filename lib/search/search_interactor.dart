@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:giphy_client/giphy_client.dart';
+import 'package:sealed_union_demo/common/list_item.dart';
 import 'package:sealed_union_demo/di.dart';
 import 'package:sealed_union_demo/search/search_update.dart';
 
@@ -13,16 +14,16 @@ class SearchInteractor {
 
   Stream<SearchUpdate> search(String query) async* {
     if (query.isEmpty) {
-      yield SearchUpdate.noTerm();
+      yield noTerm;
     } else {
-      yield SearchUpdate.firstPage(SearchPage.loading());
+      yield firstPageLoading;
 
       try {
         final collection = await _client.search(query);
         _updateOffset(collection);
-        yield SearchUpdate.firstPage(SearchPage.from(collection));
+        yield firstPageSuccess(_toListItems(collection));
       } catch (e) {
-        yield SearchUpdate.firstPage(SearchPage.error(e.toString()));
+        yield firstPageError(e.toString());
       }
     }
   }
@@ -34,23 +35,21 @@ class SearchInteractor {
     try {
       final collection = await _client.search(query);
       _updateOffset(collection);
-      yield SearchUpdate.firstPage(SearchPage.from(collection));
+      yield firstPageSuccess(_toListItems(collection));
     } catch (e) {
-      yield SearchUpdate.firstPage(SearchPage.error(e.toString()));
+      yield firstPageError(e.toString());
     } finally {
       completer.complete();
     }
   }
 
   Stream<SearchUpdate> nextPageData(String query) async* {
-    yield SearchUpdate.nextPage(SearchPage.loading());
-
     try {
       final collection = await _client.search(query, offset: _offset);
       _updateOffset(collection);
-      yield SearchUpdate.nextPage(SearchPage.from(collection));
+      yield nextPageSuccess(_toListItems(collection));
     } catch (e) {
-      yield SearchUpdate.nextPage(SearchPage.error(e.toString()));
+      yield nextPageError(e.toString());
     }
   }
 
@@ -58,3 +57,6 @@ class SearchInteractor {
     _offset = collection.pagination.offset + collection.pagination.count;
   }
 }
+
+List<ListItem> _toListItems(GiphyCollection collection) =>
+    collection.data.map((GiphyGif gif) => ListItem.image(gif)).toList();

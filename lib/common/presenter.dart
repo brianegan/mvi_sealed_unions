@@ -3,6 +3,13 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
 
+// A base class that turns a normal Stream into a BehaviorSubject. This will
+// ensure the latest ViewModel will be immediately emitted, and provides a way
+// to synchronously read the latest value.
+//
+// This is important when working with the StreamBuilder, as it will prevent
+// the StreamBuilder from building with empty data, which often causes the UI
+// flash from no content to content quickly.
 class Presenter<ViewModel> extends Stream<ViewModel> {
   final BehaviorSubject<ViewModel> _subject;
 

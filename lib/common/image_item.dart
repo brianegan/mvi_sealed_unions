@@ -1,32 +1,29 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:giphy_client/giphy_client.dart';
+import 'package:sealed_union_demo/common/list_item.dart';
 import 'package:transparent_image/transparent_image.dart';
 
-class GifItem extends StatelessWidget {
-  final GiphyGif gif;
-  final Color backgroundColor;
+class ImageItem extends StatelessWidget {
+  final ListItemImage image;
 
-  GifItem({
+  ImageItem({
     Key key,
-    @required this.gif,
-    @required this.backgroundColor,
+    @required this.image,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: backgroundColor,
+      color: image.backgroundColor,
       child: Hero(
-        tag: gif,
+        tag: image,
         child: AspectRatio(
-          aspectRatio: int.parse(gif.images.original.width) /
-              int.parse(gif.images.original.height),
+          aspectRatio: image.aspectRatio,
           child: GestureDetector(
             child: FadeInImage.memoryNetwork(
               fadeInDuration: Duration(milliseconds: 200),
               placeholder: kTransparentImage,
-              image: gif.images.fixedHeightStill.url,
+              image: image.thumbnailUrl,
               fit: BoxFit.cover,
             ),
             onTap: () {
@@ -45,8 +42,6 @@ class GifItem extends StatelessWidget {
         Animation<double> animation,
         Animation<double> secondaryAnimation,
       ) {
-        final image = gif.images.original;
-
         return Scaffold(
           body: GestureDetector(
             onVerticalDragDown: (DragDownDetails _) {
@@ -56,14 +51,14 @@ class GifItem extends StatelessWidget {
               color: Colors.black,
               child: Center(
                 child: AspectRatio(
-                  aspectRatio: int.parse(image.width) / int.parse(image.height),
+                  aspectRatio: image.aspectRatio,
                   child: Hero(
-                    tag: gif,
+                    tag: image,
                     child: Stack(
                       children: <Widget>[
                         Positioned.fill(
                           child: Image.network(
-                            gif.images.fixedHeightStill.url,
+                            image.thumbnailUrl,
                             fit: BoxFit.cover,
                           ),
                         ),

@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:giphy_client/giphy_client.dart';
+import 'package:sealed_union_demo/common/list_item.dart';
 import 'package:sealed_union_demo/di.dart';
-import 'package:sealed_union_demo/trending/trending_screen_model.dart';
-import 'package:sealed_union_demo/trending/trending_screen_update.dart';
+import 'package:sealed_union_demo/trending/trending_update.dart';
 
+/// The interactor is responsible for converting the data layer into Streams of
+/// TrendingUpdates.
 class TrendingInteractor {
   final GiphyClient _client;
   int _offset = 0;
@@ -12,44 +14,44 @@ class TrendingInteractor {
   TrendingInteractor({GiphyClient client})
       : _client = client ?? DependencyInjector.instance.client;
 
-  Stream<TrendingScreenUpdate> fetchFirstPageData([void _]) async* {
-    yield TrendingScreenUpdate.firstPage(Page.loading());
+  Stream<TrendingUpdate> fetchFirstPage([void _]) async* {
+    yield firstPageLoading;
 
     try {
-      final collection =
-          TrendingScreenCollection.from(await _client.trending());
-      _offset = collection.offset + collection.count;
-      yield TrendingScreenUpdate.firstPage(Page.collection(collection));
+      final collection = await _client.trending();
+      _updateOffset(collection);
+      yield firstPageSuccess(_toListItems(collection));
     } catch (e) {
-      yield TrendingScreenUpdate.firstPage(Page.error(e.toString()));
+      yield firstPageError(e.toString());
     }
   }
 
-  Stream<TrendingScreenUpdate> refreshPageData(
-      Completer<Null> completer) async* {
+  Stream<TrendingUpdate> refresh(Completer<Null> completer) async* {
     try {
-      final collection =
-          TrendingScreenCollection.from(await _client.trending());
-      _offset = collection.offset + collection.count;
-      yield TrendingScreenUpdate.firstPage(Page.collection(collection));
+      final collection = await _client.trending();
+      _updateOffset(collection);
+      yield firstPageSuccess(_toListItems(collection));
     } catch (e) {
-      yield TrendingScreenUpdate.firstPage(Page.error(e.toString()));
+      yield firstPageError(e.toString());
     } finally {
       completer.complete();
     }
   }
 
-  Stream<TrendingScreenUpdate> nextPageData([void _]) async* {
-    yield TrendingScreenUpdate.nextPage(Page.loading());
-
+  Stream<TrendingUpdate> nextPage([void _]) async* {
     try {
-      final collection = TrendingScreenCollection.from(
-        await _client.trending(offset: _offset),
-      );
-      _offset = collection.offset + collection.count;
-      yield TrendingScreenUpdate.nextPage(Page.collection(collection));
+      final collection = await _client.trending(offset: _offset);
+      _updateOffset(collection);
+      yield nextPageSuccess(_toListItems(collection));
     } catch (e) {
-      yield TrendingScreenUpdate.nextPage(Page.error(e.toString()));
+      yield nextPageError(e.toString());
     }
   }
+
+  void _updateOffset(GiphyCollection collection) {
+    _offset = collection.pagination.offset + collection.pagination.count;
+  }
 }
+
+List<ListItem> _toListItems(GiphyCollection collection) =>
+    collection.data.map((GiphyGif gif) => ListItem.image(gif)).toList();

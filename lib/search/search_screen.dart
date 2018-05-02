@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:sealed_union_demo/common/screen_item_list.dart';
+import 'package:sealed_union_demo/common/item_list.dart';
 import 'package:sealed_union_demo/search/search_interactor.dart';
 import 'package:sealed_union_demo/search/search_model.dart';
 import 'package:sealed_union_demo/search/search_presenter.dart';
@@ -18,7 +18,6 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  final ScrollController _controller = ScrollController();
   SearchPresenter _presenter;
 
   @override
@@ -27,14 +26,11 @@ class _SearchScreenState extends State<SearchScreen> {
         ? widget.initPresenter()
         : SearchPresenter(SearchInteractor());
 
-    _controller.addListener(_endOfListListener);
-
     super.initState();
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_endOfListListener);
     _presenter.close();
     super.dispose();
   }
@@ -49,7 +45,6 @@ class _SearchScreenState extends State<SearchScreen> {
           return RefreshIndicator(
             onRefresh: _presenter.refresh,
             child: CustomScrollView(
-              controller: _controller,
               slivers: <Widget>[
                 SliverAppBar(
                   backgroundColor: Colors.black,
@@ -79,7 +74,10 @@ class _SearchScreenState extends State<SearchScreen> {
                       SearchMessage(child: CircularProgressIndicator()),
                   (error) => SearchMessage(child: Text(error.message)),
                   (noResults) => SearchMessage(child: Text('No Results')),
-                  (results) => ScreenItemList(items: results.items),
+                  (results) => ItemList(
+                        items: results.items,
+                        loadNextPage: _presenter.loadNextPage,
+                      ),
                 )
               ],
             ),
@@ -87,15 +85,6 @@ class _SearchScreenState extends State<SearchScreen> {
         },
       ),
     );
-  }
-
-  void _endOfListListener() {
-    final extent = _controller.position.maxScrollExtent;
-    final offset = _controller.offset;
-
-    if (extent - offset < 500) {
-      _presenter.loadNextPage();
-    }
   }
 }
 

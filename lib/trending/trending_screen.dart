@@ -1,12 +1,20 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:sealed_union_demo/common/screen_item_list.dart';
+import 'package:sealed_union_demo/common/item_list.dart';
+import 'package:sealed_union_demo/common/list_item.dart';
 import 'package:sealed_union_demo/search/search_screen.dart';
 import 'package:sealed_union_demo/trending/trending_interactor.dart';
+import 'package:sealed_union_demo/trending/trending_model.dart';
 import 'package:sealed_union_demo/trending/trending_presenter.dart';
-import 'package:sealed_union_demo/trending/trending_screen_model.dart';
 
+/// Renders an infinite list of Trending Images.
+///
+/// It creates a Presenter, which provides a Stream<TrendingModel>, the latest
+/// value of the Stream, and methods to update the state of the app.
+///
+/// It then renders the Stream<TrendingModel> using a StreamBuilder, and calls
+/// methods on the presenter to update state.
 class TrendingScreen extends StatefulWidget {
   final TrendingPresenter Function() initPresenter;
 
@@ -21,7 +29,6 @@ class TrendingScreen extends StatefulWidget {
 
 class _TrendingScreenState extends State<TrendingScreen>
     with AfterLayoutMixin<TrendingScreen> {
-  final ScrollController _controller = ScrollController();
   TrendingPresenter _presenter;
 
   @override
@@ -29,8 +36,6 @@ class _TrendingScreenState extends State<TrendingScreen>
     _presenter = widget.initPresenter != null
         ? widget.initPresenter()
         : TrendingPresenter(TrendingInteractor());
-
-    _controller.addListener(_endOfListListener);
 
     super.initState();
   }
@@ -42,7 +47,6 @@ class _TrendingScreenState extends State<TrendingScreen>
 
   @override
   void dispose() {
-    _controller.removeListener(_endOfListListener);
     _presenter.close();
     super.dispose();
   }
@@ -59,7 +63,6 @@ class _TrendingScreenState extends State<TrendingScreen>
         ) {
           return snapshot.hasData
               ? RefreshableList(
-                  controller: _controller,
                   presenter: _presenter,
                   state: snapshot.data,
                 )
@@ -68,25 +71,14 @@ class _TrendingScreenState extends State<TrendingScreen>
       ),
     );
   }
-
-  void _endOfListListener() {
-    final extent = _controller.position.maxScrollExtent;
-    final offset = _controller.offset;
-
-    if (extent - offset < 500) {
-      _presenter.loadNextPage();
-    }
-  }
 }
 
 class RefreshableList extends StatelessWidget {
-  final ScrollController controller;
   final TrendingPresenter presenter;
   final TrendingModel state;
 
   const RefreshableList({
     Key key,
-    this.controller,
     this.presenter,
     this.state,
   }) : super(key: key);
@@ -97,8 +89,12 @@ class RefreshableList extends StatelessWidget {
       onRefresh: presenter.refresh,
       child: Center(
         child: state.join(
-          (collection) =>
-              TrendingGifs(collection: collection, controller: controller),
+          (items) {
+            return TrendingImages(
+              items: items,
+              loadNextPage: presenter.loadNextPage,
+            );
+          },
           (loading) => CircularProgressIndicator(),
           (error) => Text(error.message),
           (empty) => Text('Empty Response'),
@@ -108,20 +104,19 @@ class RefreshableList extends StatelessWidget {
   }
 }
 
-class TrendingGifs extends StatelessWidget {
-  final TrendingScreenCollection collection;
-  final ScrollController controller;
+class TrendingImages extends StatelessWidget {
+  final List<ListItem> items;
+  final void Function() loadNextPage;
 
-  TrendingGifs({
+  TrendingImages({
     Key key,
-    @required this.collection,
-    @required this.controller,
+    @required this.items,
+    @required this.loadNextPage,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
-      controller: controller,
       scrollDirection: Axis.vertical,
       slivers: <Widget>[
         SliverAppBar(
@@ -150,7 +145,10 @@ class TrendingGifs extends StatelessWidget {
           elevation: 0.0,
           backgroundColor: Colors.black,
         ),
-        ScreenItemList(items: collection.items),
+        ItemList(
+          items: items,
+          loadNextPage: loadNextPage,
+        ),
       ],
     );
   }

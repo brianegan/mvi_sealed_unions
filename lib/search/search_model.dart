@@ -1,5 +1,5 @@
 import 'package:giphy_client/giphy_client.dart';
-import 'package:sealed_union_demo/common/screen_item.dart';
+import 'package:sealed_union_demo/common/list_item.dart';
 import 'package:sealed_unions/sealed_unions.dart';
 
 class SearchModel extends Union5Impl<SearchNoTerm, SearchLoading, SearchError,
@@ -23,12 +23,14 @@ class SearchModel extends Union5Impl<SearchNoTerm, SearchLoading, SearchError,
   factory SearchModel.error(String message) =>
       SearchModel(_factory.third(SearchError(message)));
 
-  factory SearchModel.from(List<ScreenItem> items) => items.isEmpty
-      ? SearchModel(_factory.fourth(SearchNoResults()))
-      : SearchModel(_factory.fifth(SearchResults(items)));
+  factory SearchModel.populated(List<ListItem> items) =>
+      SearchModel(_factory.fifth(SearchResults(items)));
 
-  static List<ScreenItem> toItems(SearchModel prev) {
-    final empty = <ScreenItem>[];
+  factory SearchModel.empty() =>
+      SearchModel(_factory.fourth(SearchNoResults()));
+
+  static List<ListItem> toItems(SearchModel prev) {
+    final empty = <ListItem>[];
 
     return prev.join(
       (_) => empty,
@@ -53,13 +55,13 @@ class SearchError {
 class SearchNoResults {}
 
 class SearchResults {
-  final List<ScreenItem> items;
+  final List<ListItem> items;
 
   SearchResults(this.items);
 
   factory SearchResults.from(GiphyCollection collection) {
     return SearchResults(
-      collection.data.map((GiphyGif gif) => ScreenItem.gif(gif)).toList(),
+      collection.data.map((GiphyGif gif) => ListItem.image(gif)).toList(),
     );
   }
 }
