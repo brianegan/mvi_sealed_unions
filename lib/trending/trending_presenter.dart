@@ -14,8 +14,6 @@ import 'package:sealed_union_demo/trending/trending_update.dart';
 /// layer into a series of TrendingUpdates. The updates are then applied
 /// to the previous state of the app using the scan operator from RxDart.
 class TrendingPresenter extends Presenter<TrendingModel> {
-  static final _initialModel = TrendingModel.initial();
-
   final Sink<void> _firstPageSink;
   final Sink<Completer<Null>> _refreshSink;
   final Sink<void> _nextPageSink;
@@ -31,7 +29,7 @@ class TrendingPresenter extends Presenter<TrendingModel> {
     ]);
 
     return TrendingPresenter._(
-      updates.scan((prev, update, _) => update(prev), _initialModel),
+      updates.scan((prev, update, _) => update(prev), TrendingModel.initial()),
       firstPageSubject,
       refreshSubject,
       nextPageSubject,
@@ -43,7 +41,7 @@ class TrendingPresenter extends Presenter<TrendingModel> {
     this._firstPageSink,
     this._refreshSink,
     this._nextPageSink,
-  ) : super(stream: _stream, initialModel: _initialModel);
+  ) : super(stream: _stream, initialModel: TrendingModel.initial());
 
   void loadFirstPage() => _firstPageSink.add(null);
 

@@ -15,14 +15,14 @@ class TrendingInteractor {
       : _client = client ?? DependencyInjector.instance.client;
 
   Stream<TrendingUpdate> fetchFirstPage([void _]) async* {
-    yield firstPageLoading;
+    yield FirstPageLoading();
 
     try {
       final collection = await _client.trending();
       _updateOffset(collection);
-      yield firstPageSuccess(_toListItems(collection));
+      yield FirstPageSuccess(_toListItems(collection));
     } catch (e) {
-      yield firstPageError(e.toString());
+      yield FirstPageError(e.toString());
     }
   }
 
@@ -30,9 +30,9 @@ class TrendingInteractor {
     try {
       final collection = await _client.trending();
       _updateOffset(collection);
-      yield firstPageSuccess(_toListItems(collection));
+      yield FirstPageSuccess(_toListItems(collection));
     } catch (e) {
-      yield firstPageError(e.toString());
+      yield FirstPageError(e.toString());
     } finally {
       completer.complete();
     }
@@ -42,9 +42,9 @@ class TrendingInteractor {
     try {
       final collection = await _client.trending(offset: _offset);
       _updateOffset(collection);
-      yield nextPageSuccess(_toListItems(collection));
+      yield NextPageSuccess(_toListItems(collection));
     } catch (e) {
-      yield nextPageError(e.toString());
+      yield NextPageError();
     }
   }
 
