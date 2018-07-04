@@ -31,7 +31,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   void dispose() {
-    _presenter.close();
+    _presenter.dispose();
     super.dispose();
   }
 

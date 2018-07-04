@@ -41,7 +41,7 @@ class SearchPresenter extends Presenter<SearchModel> {
     this._nextPageSink,
     this._querySink,
     this._refreshSink,
-  ) : super(stream: _stream, initialModel: _initialModel);
+  ) : super(stream: _stream, initialState: _initialModel);
 
   Future<Null> refresh() {
     final completer = Completer<Null>();
@@ -55,8 +55,9 @@ class SearchPresenter extends Presenter<SearchModel> {
     _nextPageSink.add(null);
   }
 
-  void close() {
-    super.close();
+  @override
+  void dispose() {
+    super.dispose();
     _querySink.close();
     _nextPageSink.close();
     _refreshSink.close();

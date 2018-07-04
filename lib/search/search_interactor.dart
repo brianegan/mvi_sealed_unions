@@ -14,16 +14,16 @@ class SearchInteractor {
 
   Stream<SearchUpdate> search(String query) async* {
     if (query.isEmpty) {
-      yield noTerm;
+      yield NoTerm();
     } else {
-      yield firstPageLoading;
+      yield FirstPageLoading();
 
       try {
         final collection = await _client.search(query);
         _updateOffset(collection);
-        yield firstPageSuccess(_toListItems(collection));
+        yield FirstPageSuccess(_toListItems(collection));
       } catch (e) {
-        yield firstPageError(e.toString());
+        yield FirstPageError(e.toString());
       }
     }
   }
@@ -35,9 +35,9 @@ class SearchInteractor {
     try {
       final collection = await _client.search(query);
       _updateOffset(collection);
-      yield firstPageSuccess(_toListItems(collection));
+      yield FirstPageSuccess(_toListItems(collection));
     } catch (e) {
-      yield firstPageError(e.toString());
+      yield FirstPageError(e.toString());
     } finally {
       completer.complete();
     }
@@ -47,9 +47,9 @@ class SearchInteractor {
     try {
       final collection = await _client.search(query, offset: _offset);
       _updateOffset(collection);
-      yield nextPageSuccess(_toListItems(collection));
+      yield NextPageSuccess(_toListItems(collection));
     } catch (e) {
-      yield nextPageError(e.toString());
+      yield NextPageError(e.toString());
     }
   }
 

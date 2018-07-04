@@ -1,4 +1,3 @@
-import 'package:after_layout/after_layout.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sealed_union_demo/common/item_list.dart';
@@ -27,8 +26,7 @@ class TrendingScreen extends StatefulWidget {
   _TrendingScreenState createState() => _TrendingScreenState();
 }
 
-class _TrendingScreenState extends State<TrendingScreen>
-    with AfterLayoutMixin<TrendingScreen> {
+class _TrendingScreenState extends State<TrendingScreen> {
   TrendingPresenter _presenter;
 
   @override
@@ -37,17 +35,16 @@ class _TrendingScreenState extends State<TrendingScreen>
         ? widget.initPresenter()
         : TrendingPresenter(TrendingInteractor());
 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _presenter.loadFirstPage();
+    });
+
     super.initState();
   }
 
   @override
-  void afterFirstLayout(BuildContext context) {
-    _presenter.loadFirstPage();
-  }
-
-  @override
   void dispose() {
-    _presenter.close();
+    _presenter.dispose();
     super.dispose();
   }
 

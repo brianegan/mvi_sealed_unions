@@ -16,7 +16,8 @@ class FirstPageSuccess implements TrendingUpdate {
   FirstPageSuccess(this.items);
 
   @override
-  TrendingModel call(TrendingModel prev) => TrendingModel.from(items);
+  TrendingModel call(TrendingModel prev) =>
+      TrendingModel.from(items..add(ListItem.loading()));
 }
 
 class FirstPageError implements TrendingUpdate {

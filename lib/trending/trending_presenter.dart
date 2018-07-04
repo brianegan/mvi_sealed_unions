@@ -41,7 +41,7 @@ class TrendingPresenter extends Presenter<TrendingModel> {
     this._firstPageSink,
     this._refreshSink,
     this._nextPageSink,
-  ) : super(stream: _stream, initialModel: TrendingModel.initial());
+  ) : super(stream: _stream, initialState: TrendingModel.initial());
 
   void loadFirstPage() => _firstPageSink.add(null);
 
@@ -53,10 +53,10 @@ class TrendingPresenter extends Presenter<TrendingModel> {
 
   void loadNextPage() => _nextPageSink.add(null);
 
-  void close() {
+  void dispose() {
     _firstPageSink.close();
     _nextPageSink.close();
     _refreshSink.close();
-    super.close();
+    super.dispose();
   }
 }

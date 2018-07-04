@@ -10,29 +10,29 @@ import 'package:rxdart/rxdart.dart';
 // This is important when working with the StreamBuilder, as it will prevent
 // the StreamBuilder from building with empty data, which often causes the UI
 // flash from no content to content quickly.
-class Presenter<ViewModel> extends Stream<ViewModel> {
-  final BehaviorSubject<ViewModel> _subject;
+class Presenter<State> extends Stream<State> {
+  final BehaviorSubject<State> _subject;
 
   Presenter({
-    @required Stream<ViewModel> stream,
-    ViewModel initialModel,
-  }) : _subject = _createSubject<ViewModel>(stream, initialModel);
+    @required Stream<State> stream,
+    State initialState,
+  }) : _subject = _createSubject<State>(stream, initialState);
 
   // Get the current state. Useful for initial renders or re-renders when we
   // have already fetched the data
-  ViewModel get latest => _subject.value;
+  State get latest => _subject.value;
 
   @mustCallSuper
-  void close() => _subject.close();
+  void dispose() => _subject.close();
 
-  static BehaviorSubject<ViewModel> _createSubject<ViewModel>(
-    Stream<ViewModel> model,
-    ViewModel initialState,
+  static BehaviorSubject<State> _createSubject<State>(
+    Stream<State> model,
+    State initialState,
   ) {
-    StreamSubscription<ViewModel> subscription;
-    BehaviorSubject<ViewModel> _subject;
+    StreamSubscription<State> subscription;
+    BehaviorSubject<State> _subject;
 
-    _subject = BehaviorSubject<ViewModel>(
+    _subject = BehaviorSubject<State>(
       seedValue: initialState,
       onListen: () {
         subscription = model.listen(
@@ -49,13 +49,13 @@ class Presenter<ViewModel> extends Stream<ViewModel> {
   }
 
   @override
-  StreamSubscription<ViewModel> listen(
-    void Function(ViewModel event) onData, {
+  StreamSubscription<State> listen(
+    void Function(State event) onData, {
     Function onError,
     void Function() onDone,
     bool cancelOnError,
   }) =>
-      _subject.stream.listen(
+      _subject.listen(
         onData,
         onError: onError,
         onDone: onDone,
