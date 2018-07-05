@@ -95,15 +95,10 @@ class SearchMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SliverList(
-      delegate: SliverChildListDelegate([
-        Container(
-          height: MediaQuery.of(context).size.height -
-              kToolbarHeight -
-              MediaQuery.of(context).padding.top,
-          child: Center(child: child),
-        )
-      ]),
+    return SliverFillRemaining(
+      child: Center(
+        child: Center(child: child),
+      ),
     );
   }
 }
