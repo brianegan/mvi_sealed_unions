@@ -25,30 +25,23 @@ class ItemList extends StatelessWidget {
     final crossAxisCount = orientation == Orientation.portrait ? 2 : 3;
     final width = mediaQuery.size.width;
 
-    return SliverStaggeredGrid(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final item = items[index];
-          return item.join(
-            (image) => ImageItem(image: image),
-            (_) => LoadingItem(
-                  loadNextPage: loadNextPage,
-                ),
-            (_) => Text('Loading Error'),
-          );
-        },
-        childCount: items.length,
-        addAutomaticKeepAlives: true,
-        addRepaintBoundaries: true,
-      ),
-      gridDelegate: SliverStaggeredGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        mainAxisSpacing: 0.0,
-        crossAxisSpacing: 0.0,
-        staggeredTileBuilder: (index) =>
-            _buildTile(index, crossAxisCount, orientation, width),
-        staggeredTileCount: items.length,
-      ),
+    return SliverStaggeredGrid.countBuilder(
+      itemBuilder: (context, index) {
+        final item = items[index];
+
+        return item.join(
+          (image) => ImageItem(image: image),
+          (_) => LoadingItem(
+                loadNextPage: loadNextPage,
+              ),
+          (_) => Text('Loading Error'),
+        );
+      },
+      itemCount: items.length,
+      staggeredTileBuilder: (index) {
+        return _buildTile(index, crossAxisCount, orientation, width);
+      },
+      crossAxisCount: crossAxisCount,
     );
   }
 
